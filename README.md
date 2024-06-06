@@ -1,2 +1,2 @@
 # TransformerModelZooDataset
-Model Zoos published at the NeurIPS 2022 Dataset &amp; Benchmark track: "Model Zoos: A Dataset of Diverse Populations of Neural Network Models"
+Model Zoos submitted to the NeurIPS 2024 Dataset &amp; Benchmark track: "Transformer Model Zoos and Soups: A Population of Language and Vision Models"
