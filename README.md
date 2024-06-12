@@ -1,13 +1,14 @@
 # TransformerModelZooDataset
 Model Zoos submitted to the NeurIPS 2024 Dataset &amp; Benchmark track: "Transformer Model Zoos and Soups: A Population of Language and Vision Models"
 
+![Model Zoo](assets/transformer_model_zoo_overview_v1.png)
+
 ## Introduction
 
-The investigation of poplutaions of neural networks has gained momentum in recent years. Fuelled by the availability of such populations or so called ``model zoos'', multiple approaches have been proposed for a multitude of different downstream tasks including (i) model analysis, (ii) discovery of learning dynamics, (iii) representation learning on model weights, or (iv) generative modeling of neural network weights and biases. Unfortunately, currently available model zoos are limited in size and architecture. Firstly, they are restricted to CNNs or RNNs, neglecting the Transformer, which is among the currently most successful neural network architectures. Secondly, most model zoos focus on computer vision tasks and neglect language models.
+The investigation of poplutaions of neural networks has gained momentum in recent years.
+Fuelled by the availability of such populations or so called ``model zoos'', multiple approaches have been proposed for a multitude of different downstream tasks including (i) model analysis, (ii) discovery of learning dynamics, (iii) representation learning on model weights, or (iv) generative modeling of neural network weights and biases. Unfortunately, currently available model zoos are limited in size and architecture. Firstly, they are restricted to CNNs or RNNs, neglecting the Transformer, which is among the currently most successful neural network architectures. Secondly, most model zoos focus on computer vision tasks and neglect language models.
 
-Our approach is summarized in the following figure:
-
-![Model Zoo](assets/transformer_model_zoo_overview_v1.png)
+We address the gap by introducing model zoos of state-of-the-art architectures: we publish a dataset of Transformer model zoos, which for the first time covers both computer vision and natural language processing. To achieve this, we develop a new blueprint for model zoo generation that encompasses both pre-training and fine-tuning steps. We publish 250 vision and 40 language models that cover a large span of generating factors and thoroughly evaluate their behavioral diversity. We suggest multiple possible applications grounded in examples from the literature and show how our dataset can be used to extend them. Finally, we illustrate how our zoos can be used to unlock novel applications: we present early experiments on model weights averaging in transformer models, and show where these approaches succeed. This paper, by extending previous lines of similar work, will allow researchers to push their model population-based methods from the small model regime to state-of-the-art architectures. 
 
 This repository contains the code required to train and evaluate the models in the zoo. We include a sample of the full dataset, which will be made available before the conference. The full dataset will include all backbone models, and the populations generated from them. An overview of the performance of the models in the zoo is shown in the following figure:
 
@@ -95,6 +96,12 @@ We include sample scripts for the data preprocessing in the `data_preparation` f
 config['dataset::dump'] = 'path/to/dataset/dump'
 ```
 
+Please note that the dataset class needs to be imported in the experiment file to load the dataset dump successfully.
+
+```python
+from datasets.sst import SSTDataset
+```
+
 #### Training a model from scratch
 
 To train a model from scratch, simply instantiate a configuration file and pass it to the experiment runner. We include sample configurations for the language and vision models in the `example_configs` folder as well as corresponding experiment runners in the `experiments` folder.
@@ -102,14 +109,17 @@ To train a model from scratch, simply instantiate a configuration file and pass 
 The following code snippet demonstrates how to train a model from scratch:
 
 ```python
-from experiment_runner.def_NN_experiment import NN_tune_trainable
+import logging
+from experiment_runner.def_nn_experiment import NN_tune_trainable
+import ray
 
-# Load the configuration
+import json
+import torch
+from pathlib import Path
+
+PATH_ROOT = Path(".")
+
 def main():
-    config = json.load(open('path/to/config.json'))
-    config['dataset::dump'] = 'path/to/dataset/dump'
-    config["cuda"] = True if gpus > 0 and torch.cuda.is_available() else False
-
     cpus = 12
     gpus = 1
 
@@ -117,15 +127,18 @@ def main():
     gpu_fraction = ((gpus * 100) // (cpus / cpu_per_trial)) / 100
     resources_per_trial = {"cpu": cpu_per_trial, "gpu": gpu_fraction}
 
-    experiment_name = "VIT_CL_PRETRAINING"
-    config = json.load(open("example_configs/vision/config_cl_pretraining.json", "r"))
-    net_dir = PATH_ROOT.joinpath(experiment_name)
+    
+    config = json.load(open("example_configs/vision/config_vit_finetuning.json", "r"))
+    config["cuda"] = True if gpus > 0 and torch.cuda.is_available() else False
+    config["dataset::dump"] = "path/to/dataset/dump"
 
+    experiment_name = "VIT_FINETUNING"
+    net_dir = PATH_ROOT.joinpath(experiment_name)
     try:
         net_dir.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
-        print(f"directory {net_dir} already exists")
         pass
+    print(f"Saving models to {net_dir.absolute()}")
 
     context = ray.init(
         num_cpus=cpus,
@@ -165,8 +178,8 @@ def main():
 
     ray.shutdown()
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()
 ```
 
 
@@ -191,5 +204,13 @@ config['optim::weight_decay'] = tune.grid_search([1e-3, 1e-4, 1e-5])
 
 Ray tune will generate a model for each combination of hyperparameters in the grid. The population can be generated by running the experiment runner with the grid configuration.
 
+### Configurations
+
+#### Vision models
+
+#### Language models
+
 ## Further information
+
+For the full dataset we will provide further code for the evaluation of the models in the zoo as well as code to create and evaluate the model soups. Additionally, we will provide a general dataset class that can be used to load multiple models at once and evaluate them automatically.
 
