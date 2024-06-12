@@ -208,9 +208,40 @@ Ray tune will generate a model for each combination of hyperparameters in the gr
 
 #### Vision models
 
+The configuration for the vision models is defined in the `config_vit_pretraining.json` file. The configuration includes the following parameters:
+
+- `model::name`: The name of the model to be trained.
+- `model::o_dim`: The output dimension of the model.
+- `model::type`: The type of the model, either `vit_s_16` for Vision Transformer or `bert` for BERT.
+- `dataset::name`: The name of the dataset to be used for training.
+- `dataset::dump`: The path to the dataset dump.
+- `optim::optimizer`: The optimizer to use for training.
+- `optim::lr`: The learning rate for training.
+- `optim::weight_decay`: The weight decay for training.
+- `validation::loss`: The loss function to use for validation, if different from the training loss.
+- `training::loss`: The loss function to use for training.
+- `training::batchsize`: The batch size for training.
+- `training::epochs_train`: The number of epochs to train the model.
+- `training::output_epoch`: The frequency of saving checkpoints during training.
+- `training::mode`: The training mode, either `cl` for contrastive learning or `sl` for supervised learning.
+- `training::mixup`: Mixup ratio to use for training, None if not used.
+- `training::cutmix`: Cutmix ratio to use for training, None if not used.
+- `training::randerase`: Randerase ratio to use for training, None if not used.
+- `trainloader::num_workers`: The number of workers for data loading.
+- `cuda`: Whether to use CUDA for training.
+- `seed`: The random seed for training.
+
+For finetuning, the configuration is defined in the `config_vit_finetuning.json` file. The configuration includes the same parameters as the pretraining configuration. If the model is finetuned from a pretrained model, the path to the pretrained model checkpoint must be provided in the configuration.
+
+- `pretrained::model::path`: The path to the pretrained model checkpoint.
+
 #### Language models
+
+The configuration for the language models is defined in the `config_mlm.json` and `config_sst.json` file. The configuration works similarly to the vision models but includes additional parameters for the language models.
+
+- `pretraining::case`: The case of the model, either `continued` or `scratch`.
 
 ## Further information
 
-For the full dataset we will provide further code for the evaluation of the models in the zoo as well as code to create and evaluate the model soups. Additionally, we will provide a general dataset class that can be used to load multiple models at once and evaluate them automatically.
+For the full dataset we will provide further code for the evaluation of the models in the zoo as well as code to create and evaluate the model soups. Additionally, we will provide a general dataset class that can be used to load multiple models at once including configuration and results and evaluate them automatically.
 
