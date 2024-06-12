@@ -248,11 +248,6 @@ class NNmodule(nn.Module):
                 # send to cuda
                 input, target = input.to(self.device), target.to(self.device)
 
-            # Check if batch size is even for mixup
-            if self.use_mixup and input.size(0) % 2 != 0:
-                logging.warning("Batch size is not even, skipping this batch for mixup")
-                continue
-
             if attention_mask is not None:
                 if self.language_task == "mlm":
                     loss, correct, total = self.train_step(input=input, target=target, attention_mask=attention_mask)

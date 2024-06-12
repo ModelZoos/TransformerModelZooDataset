@@ -32,14 +32,16 @@ class NN_tune_trainable(Trainable):
                 batch_size=self.config["training::batchsize"],
                 shuffle=True,
                 num_workers=self.config.get("trainloader::workers", 6),
-                collate_fn=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15)
+                collate_fn=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15),
+                drop_last=True
             )
             self.testloader = torch.utils.data.DataLoader(
                 dataset=self.testset,
                 batch_size=self.config["training::batchsize"],
                 shuffle=False,
                 num_workers=self.config.get("trainloader::workers", 4),
-                collate_fn=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15)
+                collate_fn=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15),
+                drop_last=True
             )
             if self.valset is not None:
                 self.valloader = torch.utils.data.DataLoader(
@@ -47,7 +49,8 @@ class NN_tune_trainable(Trainable):
                     batch_size=self.config["training::batchsize"],
                     shuffle=False,
                     num_workers=self.config.get("trainloader::workers", 4),
-                    collate_fn=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15)
+                    collate_fn=DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15),
+                    drop_last=True
                 )
         else:
             self.trainloader = torch.utils.data.DataLoader(
@@ -55,12 +58,14 @@ class NN_tune_trainable(Trainable):
                 batch_size=self.config["training::batchsize"],
                 shuffle=True,
                 num_workers=self.config.get("trainloader::workers", 6),
+                drop_last=True
             )
             self.testloader = torch.utils.data.DataLoader(
                 dataset=self.testset,
                 batch_size=self.config["training::batchsize"],
                 shuffle=False,
                 num_workers=self.config.get("trainloader::workers", 4),
+                drop_last=True
             )
             if self.valset is not None:
                 self.valloader = torch.utils.data.DataLoader(
@@ -68,6 +73,7 @@ class NN_tune_trainable(Trainable):
                     batch_size=self.config["training::batchsize"],
                     shuffle=False,
                     num_workers=self.config.get("trainloader::workers", 4),
+                    drop_last=True
                 )
 
         config["scheduler::steps_per_epoch"] = len(self.trainloader)
