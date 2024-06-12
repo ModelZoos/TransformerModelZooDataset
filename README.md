@@ -206,9 +206,11 @@ Ray tune will generate a model for each combination of hyperparameters in the gr
 
 ### Configurations
 
+Please refer to the [example_configs](example_configs) folder for sample configurations for the language and vision models. The configurations are used to define the hyperparameters for training and evaluation of the models.
+
 #### Vision models
 
-The configuration for the vision models is defined in the `config_vit_pretraining.json` file. The configuration includes the following parameters:
+Example configurations for the vision models are defined in the `config_cl_pretraining.json`, `config_sl_pretraining.json`, and `config_vit_finetuning.json` files. The configuration includes the following parameters:
 
 - `model::name`: The name of the model to be trained.
 - `model::o_dim`: The output dimension of the model.
