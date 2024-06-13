@@ -1,7 +1,10 @@
 # TransformerModelZooDataset
+
 Model Zoos submitted to the NeurIPS 2024 Dataset &amp; Benchmark track: "Transformer Model Zoos and Soups: A Population of Language and Vision Models"
 
 ![Model Zoo](assets/transformer_model_zoo_overview_v1.png)
+
+**Data access (Zenodo):** [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.11635113.svg)](https://doi.org/10.5281/zenodo.11635113)
 
 ## Introduction
 
@@ -28,7 +31,7 @@ pip install -r requirements.txt
 
 ### Downloading the dataset
 
-The dataset sample is available for download from the following [link](https://www.example.com). It is structured as follows:
+The dataset sample is available for download from the following [link](https://zenodo.org/doi/10.5281/zenodo.11635112). It is structured as follows:
 
 ```
 - dataset
