@@ -2,10 +2,6 @@ from datasets import load_dataset, DatasetDict
 from transformers import BertTokenizer
 from tqdm import tqdm
 import random
-import pickle
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.stats import norm
 import json
 from datasets.openweb import OpenWebDataSet
 import torch

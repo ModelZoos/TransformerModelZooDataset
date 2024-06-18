@@ -21,7 +21,7 @@ This repository contains the code required to train and evaluate the models in t
 
 ### Requirements
 
-The packages required to run the code are listed in the `requirements.txt` file. You can install them using the following command:
+For this project we use python 3.10.6. The packages required to run the code are listed in the `requirements.txt` file. You can install them using the following command:
 
 ```bash
 pip install -r requirements.txt
