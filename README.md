@@ -105,6 +105,23 @@ Please note that the dataset class needs to be imported in the experiment file t
 from datasets.sst import SSTDataset
 ```
 
+It is also possible to load the dataset directly in the experiment file and pass it to the model. The following code snippet demonstrates how to load the dataset directly in the experiment file:
+
+```python
+from datasets.openweb import OpenWebDataSet
+
+trainset = OpenWebDataSet("data/train_data.json")
+valset = OpenWebDataSet("data/val_data.json")
+
+dataset = {
+    "trainset": trainset,
+    "testset": valset,
+}
+
+dataset_ref = ray.put(dataset)
+config["dataset::ref"] = dataset_ref
+```
+
 #### Training a model from scratch
 
 To train a model from scratch, simply instantiate a configuration file and pass it to the experiment runner. We include sample configurations for the language and vision models in the `example_configs` folder as well as corresponding experiment runners in the `experiments` folder.
