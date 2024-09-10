@@ -11,7 +11,6 @@ import torch
 from pathlib import Path
 from data_preparation.vit.pretraining import ContrastiveTransformations
 sys.path.append(str(Path(".").absolute()))
-from datasets.sst import SSTDataset
 
 PATH_ROOT = Path(".")
 
@@ -25,7 +24,7 @@ def main():
 
     experiment_name = "VIT_SL_PRETRAINING"
 
-    config = json.load(open("example_configs/vision/config_sl_pretraining.json", "r"))
+    config = json.load(open("example_configs/config_sl_pretraining.json", "r"))
 
 
     net_dir = PATH_ROOT.joinpath("vit_sl_pretraining")

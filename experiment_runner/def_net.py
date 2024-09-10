@@ -22,8 +22,6 @@ class NNmodule(nn.Module):
         super(NNmodule, self).__init__()
         # make sure mixup does not interfere with older model definitions
         self.use_mixup = False
-        self.language_model = False
-        self.language_task = None
         # set verbosity
         self.verbosity = verbosity
         if not cuda:
@@ -69,20 +67,6 @@ class NNmodule(nn.Module):
                     pretrained_model_path=config.get("pretraining::model::path", None),
                 )
                 self.language_task = None
-        elif config["model::type"] == "bert":
-            self.language_model = True
-            if config["dataset::name"] == "sst":
-                model = SentimentClassifier(
-                    n_classes=config["model::o_dim"],
-                    case=config.get("pretraininig::case", "continued"),
-                    pretrained_model_path=config.get("pretraining::model::path", None),
-                )
-                self.language_task = "classification"
-            else:
-                model = MaskedLanguageModel(
-                    case=config.get("pretraininig::case", "continued"),
-                )
-                self.language_task = "mlm"
         else:
             raise NotImplementedError("error: model type unkown")
         
@@ -92,7 +76,6 @@ class NNmodule(nn.Module):
         self.model = model
 
         self.task = config.get("training::task", "classification")
-        self.pretraining_mode = config.get("training::mode", None)
 
         self.criterion_val = None
 
@@ -105,8 +88,6 @@ class NNmodule(nn.Module):
             self.criterion = InfoNCELoss(
                 temperature=config.get("training::temperature", 0.07)
             )
-        if self.language_task == "mlm":
-            self.criterion = nn.CrossEntropyLoss(ignore_index=-100)
         else:
             self.criterion = nn.CrossEntropyLoss()
 
@@ -119,9 +100,7 @@ class NNmodule(nn.Module):
     # module forward function
     def forward(self, x, target=None, attention_mask=None):
         # compute model prediction
-        if attention_mask is not None: # language model
-            output = self.model(x, attention_mask)
-        elif self.training and self.use_mixup and target is not None: # mixup requires targets in forward pass
+        if self.training and self.use_mixup and target is not None: # mixup requires targets in forward pass
             output, target = self.model(x, target)
             return output, target
         else:
@@ -154,18 +133,14 @@ class NNmodule(nn.Module):
                 weight_decay=config["optim::wd"],
                 nesterov=config.get("optim::nesterov", False),
             )
-        if config["optim::optimizer"] == "adam":
-            self.optimizer = torch.optim.Adam(
-                self.model.parameters(),
-                lr=config["optim::lr"],
-                weight_decay=config["optim::wd"],
-            )
-        if config["optim::optimizer"] == "adamw":
+        elif config["optim::optimizer"] == "adamw":
             self.optimizer = torch.optim.AdamW(
                 self.model.parameters(),
                 lr=config["optim::lr"],
                 weight_decay=config["optim::wd"],
             )
+        else:
+            raise NotImplementedError("optimizer not implemented")
 
     # one training step / batch
     def train_step(self, input, target, attention_mask=None):
@@ -173,9 +148,7 @@ class NNmodule(nn.Module):
         self.optimizer.zero_grad()
         target_tmp = None # for mixup we also need the adjusted labels
 
-        if attention_mask is not None: # if attention mask is supplied, we need to pass it to forward
-            output = self.forward(x=input, attention_mask=attention_mask) 
-        elif self.use_mixup: # mixup requires targets in forward pass
+        if self.use_mixup: # mixup requires targets in forward pass
 
             output, target_tmp = self.forward(input, target)
         else:
@@ -184,10 +157,6 @@ class NNmodule(nn.Module):
         # compute loss
         if target_tmp is not None: # if we have mixup, we need to compute the loss with the adjusted labels
             loss = self.criterion(output, target_tmp)
-        elif self.language_task == "mlm":
-            target = target.view(-1)
-            output = output.view(-1, output.size(-1))
-            loss = self.criterion(output, target)
         elif self.pretraining_mode == "cl": 
             loss, correct = self.criterion(output, target)
         else:
@@ -202,10 +171,7 @@ class NNmodule(nn.Module):
             self.scheduler.step()
         # compute correct
         correct = 0
-        if self.language_task == "mlm":
-            correct, total = calculate_mlm_scores(output, target)
-            return loss.item(), correct, total
-        elif self.pretraining_mode == "cl":
+        if self.pretraining_mode == "cl":
             return loss.item(), correct
         elif self.task == "classification":
             _, predicted = torch.max(output.data, 1)
@@ -235,37 +201,18 @@ class NNmodule(nn.Module):
         # enter loop over batches
         for idx, data in enumerate(trainloader):
             # check if we have a language model
-            if self.language_model:
-                input = data["input_ids"].to(self.device)
-                target = data["labels"].to(self.device)
-                attention_mask = data["attention_mask"].to(self.device)
-            elif self.pretraining_mode == "cl":
+            if self.pretraining_mode == "cl":
                 input, target = data
-                attention_mask = None
+
             else:
                 input, target = data
-                attention_mask = None
                 # send to cuda
                 input, target = input.to(self.device), target.to(self.device)
 
-            if attention_mask is not None:
-                if self.language_task == "mlm":
-                    loss, correct, total = self.train_step(input=input, target=target, attention_mask=attention_mask)
-                    loss_acc += loss * total
-                    correct_acc += correct
-                    n_data += total
-                else:
-                    loss, correct = self.train_step(input=input, target=target, attention_mask=attention_mask)
-                    loss_acc += loss * len(target)
-                    correct_acc += correct
-                    n_data += len(target)
-                
-            else:
-                loss, correct = self.train_step(input, target)
-                loss_acc += loss * len(target)
-                correct_acc += correct
-                n_data += len(target)
-            # scale loss with batchsize
+            loss, correct = self.train_step(input, target)
+            loss_acc += loss * len(target)
+            correct_acc += correct
+            n_data += len(target)
             
             # logging
             if idx > 0 and idx % idx_out == 0:
@@ -284,35 +231,21 @@ class NNmodule(nn.Module):
         loss_running = loss_acc / n_data
         if self.task == "classification":
             accuracy = correct_acc / n_data
-        elif self.task == "regression":
-            # use r2
-            accuracy = 1 - loss_running / self.loss_mean
+
         return loss_running, accuracy
 
     # test batch
     def test_step(self, input, target, attention_mask=None):
         correct = 0
         with torch.no_grad():
-            # forward pass: prediction
-            if attention_mask is not None:
-                output = self.forward(x=input, attention_mask=attention_mask)
-
-            else:
-                output = self.forward(input)
+            output = self.forward(input)
             # compute loss
             if self.criterion_val is not None: # if we have a different loss for validation, e.g. when using mixup for training, we use a different loss for validation
                 loss = self.criterion_val(output, target)
             else:
-                if self.language_task == "mlm":
-                    target = target.view(-1)
-                    output = output.view(-1, output.size(-1))
-                    loss = self.criterion(output, target)
-                else:
-                    loss = self.criterion(output, target)
-            if self.language_task == "mlm":
-                correct, total = calculate_mlm_scores(output, target)
-                return loss.item(), correct, total 
-            elif self.pretraining_mode == "cl":
+                loss = self.criterion(output, target)
+
+            if self.pretraining_mode == "cl":
                 loss, correct = self.criterion(output, target)
                 return loss.item(), correct
             elif self.task == "classification":
@@ -331,37 +264,20 @@ class NNmodule(nn.Module):
         correct_acc = 0
         n_data = 0
         for idx, data in enumerate(testloader):
-            # check if we have a language model
-            if self.language_model:
-                input = data["input_ids"].to(self.device)
-                target = data["labels"].to(self.device)
-                attention_mask = data["attention_mask"].to(self.device)
-            elif self.pretraining_mode == "cl":
+
+            if self.pretraining_mode == "cl":
                 input, target = data # for contrastive learning, input is a list of augmented images, concat is handled in the model
-                attention_mask = None
             else:
                 input, target = data
-                attention_mask = None
-                # send to cuda
-                input, target = input.to(self.device), target.to(self.device)
+            # send to cuda
+            input, target = input.to(self.device), target.to(self.device)
             # perform test step on batch.
-            if attention_mask is not None:
-                if self.language_task == "mlm":
-                    loss, correct, total = self.test_step(input, target, attention_mask)
-                    loss_acc += loss * total
-                    correct_acc += correct
-                    n_data += total
-                else:
-                    loss, correct = self.test_step(input, target, attention_mask)
-                    loss_acc += loss * len(target)
-                    correct_acc += correct
-                    n_data += len(target)
-            else:
-                loss, correct = self.test_step(input, target)
-                # scale loss with batchsize
-                loss_acc += loss * len(target)
-                correct_acc += correct
-                n_data += len(target)
+            
+            loss, correct = self.test_step(input, target)
+            # scale loss with batchsize
+            loss_acc += loss * len(target)
+            correct_acc += correct
+            n_data += len(target)
         # logging
         # compute epoch running losses
         loss_running = loss_acc / n_data
@@ -372,21 +288,4 @@ class NNmodule(nn.Module):
         logging.info(f"test ::: loss: {loss_running}; accuracy: {accuracy}")
 
         return loss_running, accuracy
-    
-def calculate_mlm_scores(outputs, labels):
-
-    logits = outputs
-    
-    probabilities = torch.nn.functional.softmax(logits, dim=-1)
-    
-    predictions = torch.argmax(probabilities, dim=-1)
-    
-    mask = (labels != -100)
-    
-    correct = (predictions == labels) * mask
-
-    correct = correct.sum().item()
-    total = mask.sum().item()
-
-    return correct, total
 

@@ -21,7 +21,7 @@ def main():
 
     experiment_name = "VIT_FINETUNING"
 
-    config = json.load(open("example_configs/vision/config_vit_finetuning.json", "r"))
+    config = json.load(open("example_configs/config_vit_finetuning.json", "r"))
 
 
     net_dir = PATH_ROOT.joinpath("vit_finetuning")

@@ -53,4 +53,4 @@ dataset = {
 }
 
 # Save the dataset to a file
-torch.save(dataset, "cifar_dgx2.pt")
+torch.save(dataset, "cifar100.pt")

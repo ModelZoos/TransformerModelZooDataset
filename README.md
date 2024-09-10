@@ -8,12 +8,10 @@ Model Zoos submitted to the NeurIPS 2024 Dataset &amp; Benchmark track: "Transfo
 
 ## Introduction
 
-The investigation of poplutaions of neural networks has gained momentum in recent years.
-Fuelled by the availability of such populations or so called ``model zoos'', multiple approaches have been proposed for a multitude of different downstream tasks including (i) model analysis, (ii) discovery of learning dynamics, (iii) representation learning on model weights, or (iv) generative modeling of neural network weights and biases. Unfortunately, currently available model zoos are limited in size and architecture. Firstly, they are restricted to CNNs or RNNs, neglecting the Transformer, which is among the currently most successful neural network architectures. Secondly, most model zoos focus on computer vision tasks and neglect language models.
-
-We address the gap by introducing model zoos of state-of-the-art architectures: we publish a dataset of Transformer model zoos, which for the first time covers both computer vision and natural language processing. To achieve this, we develop a new blueprint for model zoo generation that encompasses both pre-training and fine-tuning steps. We publish 250 vision and 40 language models that cover a large span of generating factors and thoroughly evaluate their behavioral diversity. We suggest multiple possible applications grounded in examples from the literature and show how our dataset can be used to extend them. Finally, we illustrate how our zoos can be used to unlock novel applications: we present early experiments on model weights averaging in transformer models, and show where these approaches succeed. This paper, by extending previous lines of similar work, will allow researchers to push their model population-based methods from the small model regime to state-of-the-art architectures. 
-
-This repository contains the code required to train and evaluate the models in the zoo. We include a sample of the full dataset, which will be made available before the conference. The full dataset will include all backbone models, and the populations generated from them. An overview of the performance of the models in the zoo is shown in the following figure:
+The availability of large, structured populations of neural networks --- called ``model zoos'' --- has led to the development of a multitude of downstream tasks ranging from model analysis, to representation learning on model weights or generative modeling of neural network parameters. 
+However, existing model zoos are limited in size and architecture and neglect the transformer, which is among the currently most successful neural network architectures.
+We address this gap by introducing the first model zoo of vision transformers (ViT). To better represent recent training approaches, we develop a new blueprint for model zoo generation that encompasses both pre-training and fine-tuning steps, and publish 250 unique models. They are carefully generated with a large span of generating factors, and their diversity is validated using a thorough choice of weight-space and behavioral metrics.
+To further motivate the utility of our proposed dataset, we suggest multiple possible applications grounded in both extensive exploratory experiments and a number of examples from the existing literature. By extending previous lines of similar work, our model zoo allows researchers to push their model population-based methods from the small model regime to state-of-the-art architectures. An overview of the performance of the models in the zoo is shown in the following figure:
 
 ![Performance Metrics](assets/performance_metrics.png)
 
@@ -35,34 +33,19 @@ The dataset sample is available for download from the following [link](https://z
 
 ```
 - dataset
-    - vision
-        - pretraining
+    - pretraining
+        - model 1
+            - checkpoint_0000XY
+            - config.json
+            - result.json
+        - ...
+    - finetuning
+        - pretrained model 1
             - model 1
                 - checkpoint_0000XY
                 - config.json
                 - result.json
             - ...
-        - finetuning
-            - pretrained model 1
-                - model 1
-                    - checkpoint_0000XY
-                    - config.json
-                    - result.json
-                - ...
-    - language
-        - pretraining
-            - model 1
-                - checkpoint_0000XY
-                - config.json
-                - result.json
-            - ...
-        - finetuning
-            - pretrained model 1
-                - model 1
-                    - checkpoint_0000XY
-                    - config.json
-                    - result.json
-                - ...
 ```
 
 The pretrained models are stored in the `pretraining` folders, their names include the generating factors used to create them. The finetuned models are stored in the `finetuning` folders and are ordered per pretrained model they were finetuned from. Each model directory contains a `config.json` file with the model configuration `result.json` file with the model performance metrics. Moreover, it includes checkpoints of the model per 10 epochs of training in the format `checkpoint_0000XY/checkppints`. The sample dataset only includes a few models and a limited number of checkpoints. The full dataset will be made available before the conference.
@@ -99,19 +82,14 @@ We include sample scripts for the data preprocessing in the `data_preparation` f
 config['dataset::dump'] = 'path/to/dataset/dump'
 ```
 
-Please note that the dataset class needs to be imported in the experiment file to load the dataset dump successfully.
-
-```python
-from datasets.sst import SSTDataset
-```
 
 It is also possible to load the dataset directly in the experiment file and pass it to the model. The following code snippet demonstrates how to load the dataset directly in the experiment file:
 
 ```python
-from datasets.openweb import OpenWebDataSet
+from torchvision.datasets import CIFAR100
 
-trainset = OpenWebDataSet("data/train_data.json")
-valset = OpenWebDataSet("data/val_data.json")
+trainset = CIFAR100(root="data", train=True, download=True)
+valset = CIFAR100(root="data", train=False, download=True)
 
 dataset = {
     "trainset": trainset,
@@ -148,7 +126,7 @@ def main():
     resources_per_trial = {"cpu": cpu_per_trial, "gpu": gpu_fraction}
 
     
-    config = json.load(open("example_configs/vision/config_vit_finetuning.json", "r"))
+    config = json.load(open("example_configs/config_vit_finetuning.json", "r"))
     config["cuda"] = True if gpus > 0 and torch.cuda.is_available() else False
     config["dataset::dump"] = "path/to/dataset/dump"
 
@@ -218,17 +196,16 @@ This will automatically load the pretrained model checkpoint into the model befo
 To generate populations of models, a grid of hyperparameters must be defined. The grid is defined in the configuration file and is used to generate a population of models. The following code snippet demonstrates how to define a grid:
 
 ```python
-config['optim::lr'] = tune.grid_search([1e-3, 1e-4, 1e-5])
-config['optim::weight_decay'] = tune.grid_search([1e-3, 1e-4, 1e-5])
+config['optim::lr'] = tune.grid_search([3e-3, 1e-3, 1e-4])
+config['optim::weight_decay'] = tune.grid_search([1e-3, 0])
 ```
 
 Ray tune will generate a model for each combination of hyperparameters in the grid. The population can be generated by running the experiment runner with the grid configuration.
 
 ### Configurations
 
-Please refer to the [example_configs](example_configs) folder for sample configurations for the language and vision models. The configurations are used to define the hyperparameters for training and evaluation of the models.
+Please refer to the [example_configs](example_configs) folder for sample configurations for vision models. The configurations are used to define the hyperparameters for training and evaluation of the models.
 
-#### Vision models
 
 Example configurations for the vision models are defined in the `config_cl_pretraining.json`, `config_sl_pretraining.json`, and `config_vit_finetuning.json` files. The configuration includes the following parameters:
 
@@ -256,12 +233,6 @@ Example configurations for the vision models are defined in the `config_cl_pretr
 For finetuning, the configuration is defined in the `config_vit_finetuning.json` file. The configuration includes the same parameters as the pretraining configuration. If the model is finetuned from a pretrained model, the path to the pretrained model checkpoint must be provided in the configuration.
 
 - `pretrained::model::path`: The path to the pretrained model checkpoint.
-
-#### Language models
-
-The configuration for the language models is defined in the `config_mlm.json` and `config_sst.json` file. The configuration works similarly to the vision models but includes additional parameters for the language models.
-
-- `pretraining::case`: The case of the model, either `continued` or `scratch`.
 
 ## Further information
 
