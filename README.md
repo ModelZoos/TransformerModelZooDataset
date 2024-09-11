@@ -1,19 +1,16 @@
 # TransformerModelZooDataset
 
-Model Zoos submitted to the NeurIPS 2024 Dataset &amp; Benchmark track: "Transformer Model Zoos and Soups: A Population of Language and Vision Models"
+Model Zoos submitted to the WACV 2025 Algorithms: "A Model Zoo of Vision Transformers"
 
-![Model Zoo](assets/transformer_model_zoo_overview_v1.png)
 
-**Data access (Zenodo):** [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.11635113.svg)](https://doi.org/10.5281/zenodo.11635113)
+**Data access (Sample Dataset):** [LINK](https://drive.proton.me/urls/16CK3PDT24#pdjwltgFYZEQ)
 
 ## Introduction
 
-The availability of large, structured populations of neural networks --- called ``model zoos'' --- has led to the development of a multitude of downstream tasks ranging from model analysis, to representation learning on model weights or generative modeling of neural network parameters. 
+The availability of large, structured populations of neural networks - "called model zoos" - has led to the development of a multitude of downstream tasks ranging from model analysis, to representation learning on model weights or generative modeling of neural network parameters. 
 However, existing model zoos are limited in size and architecture and neglect the transformer, which is among the currently most successful neural network architectures.
 We address this gap by introducing the first model zoo of vision transformers (ViT). To better represent recent training approaches, we develop a new blueprint for model zoo generation that encompasses both pre-training and fine-tuning steps, and publish 250 unique models. They are carefully generated with a large span of generating factors, and their diversity is validated using a thorough choice of weight-space and behavioral metrics.
-To further motivate the utility of our proposed dataset, we suggest multiple possible applications grounded in both extensive exploratory experiments and a number of examples from the existing literature. By extending previous lines of similar work, our model zoo allows researchers to push their model population-based methods from the small model regime to state-of-the-art architectures. An overview of the performance of the models in the zoo is shown in the following figure:
-
-![Performance Metrics](assets/performance_metrics.png)
+To further motivate the utility of our proposed dataset, we suggest multiple possible applications grounded in both extensive exploratory experiments and a number of examples from the existing literature. By extending previous lines of similar work, our model zoo allows researchers to push their model population-based methods from the small model regime to state-of-the-art architectures. 
 
 ## Installation
 
@@ -29,7 +26,7 @@ pip install -r requirements.txt
 
 ### Downloading the dataset
 
-The dataset sample is available for download from the following [link](https://zenodo.org/doi/10.5281/zenodo.11635112). It is structured as follows:
+The dataset sample is available for download from the following [link](https://drive.proton.me/urls/16CK3PDT24#pdjwltgFYZEQ). It is structured as follows:
 
 ```
 - dataset
@@ -236,5 +233,5 @@ For finetuning, the configuration is defined in the `config_vit_finetuning.json`
 
 ## Further information
 
-For the full dataset we will provide further code for the evaluation of the models in the zoo as well as code to create and evaluate the model soups. Additionally, we will provide a general dataset class that can be used to load multiple models at once including configuration and results and evaluate them automatically.
+For the full dataset we will provide further code for the evaluation of the models in the zoo as well as code to create and evaluate the model soups as well as the neural lineage predicition. Additionally, we will provide a general dataset class that can be used to load multiple models at once including configuration and results and evaluate them automatically.
 
