@@ -1,6 +1,6 @@
 # TransformerModelZooDataset
 
-Model Zoos submitted to the WACV 2025 Algorithms: "A Model Zoo of Vision Transformers"
+Model Zoos submitted to the WACV 2025 Algorithms Track: "A Model Zoo of Vision Transformers"
 
 
 **Data access (Sample Dataset):** [LINK](https://drive.proton.me/urls/16CK3PDT24#pdjwltgFYZEQ)
